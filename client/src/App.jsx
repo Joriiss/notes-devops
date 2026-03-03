@@ -11,25 +11,35 @@ export default function App() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [validationWarning, setValidationWarning] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  async function fetchNotes() {
+  async function fetchNotes(pageNum = page) {
     try {
       setError(null);
-      const res = await fetch(API);
+      setLoading(true);
+      const res = await fetch(`${API}?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error('Failed to load notes');
       const data = await res.json();
-      setNotes(Array.isArray(data) ? data : []);
+      setNotes(data.items ?? []);
+      setTotal(data.total ?? 0);
+      setTotalPages(data.totalPages ?? 1);
+      setPage(data.page ?? pageNum);
     } catch (err) {
       setError(err.message);
       setNotes([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    fetchNotes(page);
+  }, [page]);
 
   function clearForm() {
     setTitle('');
@@ -75,7 +85,8 @@ export default function App() {
         if (!res.ok) throw new Error('Failed to create');
       }
       clearForm();
-      await fetchNotes();
+      setPage(1);
+      await fetchNotes(1);
     } catch (err) {
       setError(err.message);
     }
@@ -88,7 +99,7 @@ export default function App() {
       const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
       if (editingId === id) clearForm();
-      await fetchNotes();
+      await fetchNotes(page);
     } catch (err) {
       setError(err.message);
     }
@@ -157,9 +168,10 @@ export default function App() {
 
       {loading ? (
         <p className="muted">Loading…</p>
-      ) : notes.length === 0 ? (
+      ) : notes.length === 0 && total === 0 ? (
         <p className="muted">No notes yet. Add one above.</p>
       ) : (
+        <>
         <ul className="list">
           {notes.map((note) => (
             <li key={note._id} className="card">
@@ -188,6 +200,35 @@ export default function App() {
             </li>
           ))}
         </ul>
+        {totalPages > 1 && (
+          <nav className="pagination" aria-label="Notes pagination">
+            <p className="pagination-info">
+              Page {page} of {totalPages}
+              {total > 0 && ` · ${total} note${total !== 1 ? 's' : ''} total`}
+            </p>
+            <div className="pagination-actions">
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                disabled={page <= 1 || loading}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label="Previous page"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                disabled={page >= totalPages || loading}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label="Next page"
+              >
+                Next
+              </button>
+            </div>
+          </nav>
+        )}
+        </>
       )}
     </>
   );
