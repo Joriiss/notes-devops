@@ -34,8 +34,8 @@ describe('API /ressources — cas nominaux', () => {
   it('GET /ressources returns 200 and empty array when no notes', async () => {
     const res = await request(app).get('/ressources');
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body).toHaveLength(0);
+    expect(res.body).toMatchObject({ items: [], total: 0, page: 1, limit: 10, totalPages: 1 });
+    expect(res.body.items).toHaveLength(0);
   });
 
   it('POST /ressources creates a note and returns 201', async () => {
@@ -45,6 +45,15 @@ describe('API /ressources — cas nominaux', () => {
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ title: 'Test note', content: 'Hello world' });
     expect(res.body._id).toBeDefined();
+  });
+
+  it('GET /ressources returns paginated list', async () => {
+    await request(app).post('/ressources').send({ title: 'A', content: 'a' });
+    await request(app).post('/ressources').send({ title: 'B', content: 'b' });
+    const res = await request(app).get('/ressources?page=1&limit=10');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ page: 1, limit: 10, total: 2, totalPages: 1 });
+    expect(res.body.items).toHaveLength(2);
   });
 
   it('GET /ressources/:id returns 200 and the note', async () => {

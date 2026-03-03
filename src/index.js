@@ -28,11 +28,27 @@ function validateNoteBody(body) {
   return { valid: true, title: titleStr, content: contentStr };
 }
 
-// GET /ressources — list all
+// GET /ressources — list with pagination (?page=1&limit=10)
 app.get('/ressources', async (req, res) => {
   try {
-    const notes = await Note.find().sort({ createdAt: -1 });
-    res.status(200).json(notes);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Note.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Note.countDocuments(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    res.status(200).json({
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
