@@ -4,12 +4,9 @@ REST API for managing notes. Built with Node.js, Express, and MongoDB for a DevO
 
 ## Tech stack
 
-- **Runtime:** Node.js
-- **Framework:** Express
-- **Database:** MongoDB
-- **ODM:** Mongoose
+- **Backend:** Node.js, Express, MongoDB, Mongoose, dotenv
+- **Frontend:** React (Vite), minimal UI
 - **Tests:** Jest + Supertest
-- **Env:** dotenv
 
 ## Prerequisites
 
@@ -51,6 +48,29 @@ npm run dev
 ```
 
 The API is available at `http://localhost:3000` (or the port set in `.env`).
+
+## Frontend (React)
+
+A minimal web UI to add, edit, delete and list notes.
+
+**Development** (API must be running on port 3000):
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. The Vite dev server proxies `/ressources` and `/health` to the API.
+
+**Production:** Build the client and start the API; the API serves the built files:
+
+```bash
+cd client && npm install && npm run build && cd ..
+npm start
+```
+
+Then open http://localhost:3000 for the app and API.
 
 ## Run with Docker Compose
 
@@ -128,6 +148,15 @@ curl -X DELETE http://localhost:3000/ressources/<id>
 notes-devops/
 ├── .github/workflows/
 │   └── ci.yml             # CI: Lint → Tests → Docker Build
+├── client/                 # React (Vite) frontend
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   ├── main.jsx
+│   │   └── index.css
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
 ├── src/
 │   ├── config/
 │   │   └── db.js          # MongoDB connection

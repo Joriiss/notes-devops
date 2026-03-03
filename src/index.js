@@ -1,4 +1,6 @@
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
 const { connectDB } = require('./config/db');
@@ -105,6 +107,19 @@ app.delete('/ressources/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Serve React build when present (production)
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('/{*path}', (req, res, next) => {
+    if (req.accepts('html')) {
+      res.sendFile(path.join(clientDist, 'index.html'));
+    } else {
+      next();
+    }
+  });
+}
 
 async function startServer() {
   await connectDB();
