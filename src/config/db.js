@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
-const MONGODB_URI =
-  process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/notes-devops';
-
 async function connectDB() {
+  const uri =
+    process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/notes-devops';
+
   try {
-    await mongoose.connect(MONGODB_URI, {
+    await mongoose.connect(uri, {
       autoIndex: true,
     });
     console.log('Connected to MongoDB');
