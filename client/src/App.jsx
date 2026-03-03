@@ -10,6 +10,7 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [validationWarning, setValidationWarning] = useState(null);
 
   async function fetchNotes() {
     try {
@@ -34,14 +35,28 @@ export default function App() {
     setTitle('');
     setContent('');
     setEditingId(null);
+    setValidationWarning(null);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     const t = title.trim();
     const c = content.trim();
-    if (!t || !c) return;
 
+    if (!t && !c) {
+      setValidationWarning('Please enter a title and content.');
+      return;
+    }
+    if (!t) {
+      setValidationWarning('Please enter a title.');
+      return;
+    }
+    if (!c) {
+      setValidationWarning('Please enter some content.');
+      return;
+    }
+
+    setValidationWarning(null);
     try {
       setError(null);
       if (editingId) {
@@ -99,14 +114,20 @@ export default function App() {
           type="text"
           placeholder="Title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setValidationWarning(null);
+          }}
           className="input"
           aria-label="Title"
         />
         <textarea
           placeholder="Content"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => {
+            setContent(e.target.value);
+            setValidationWarning(null);
+          }}
           className="input textarea"
           rows={2}
           aria-label="Content"
@@ -121,6 +142,11 @@ export default function App() {
             </button>
           )}
         </div>
+        {validationWarning && (
+          <p className="validation-warning" role="alert">
+            {validationWarning}
+          </p>
+        )}
       </form>
 
       {error && (

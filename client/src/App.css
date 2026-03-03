@@ -83,6 +83,16 @@
   margin: 0 0 1rem;
 }
 
+.validation-warning {
+  color: #b45309;
+  font-size: 0.9375rem;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: #fffbeb;
+  border-radius: var(--radius);
+  border: 1px solid #fcd34d;
+}
+
 .muted {
   color: var(--text-muted);
   font-size: 0.9375rem;
