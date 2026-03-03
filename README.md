@@ -13,8 +13,8 @@ REST API for managing notes. Built with Node.js, Express, and MongoDB for a DevO
 
 ## Prerequisites
 
-- Node.js (v18+ recommended)
-- MongoDB running locally (or a reachable MongoDB URI)
+- **Local run:** Node.js (v18+), MongoDB running locally (or a reachable MongoDB URI)
+- **Docker run:** Docker and Docker Compose
 
 ## Setup
 
@@ -51,6 +51,27 @@ npm run dev
 ```
 
 The API is available at `http://localhost:3000` (or the port set in `.env`).
+
+## Run with Docker Compose
+
+With Docker and Docker Compose installed, you can run the full stack (API + MongoDB):
+
+```bash
+docker compose up --build
+```
+
+- **API:** http://localhost:3000  
+- **MongoDB:** localhost:27017 (data persisted in volume `notes-devops_mongo_data`)
+
+Run in detached mode: `docker compose up --build -d`. Stop with `docker compose down`.
+
+## Lint
+
+```bash
+npm run lint
+```
+
+Runs ESLint on `src/` and `tests/`.
 
 ## Run tests
 
@@ -105,6 +126,8 @@ curl -X DELETE http://localhost:3000/ressources/<id>
 
 ```
 notes-devops/
+├── .github/workflows/
+│   └── ci.yml             # CI: Lint → Tests → Docker Build
 ├── src/
 │   ├── config/
 │   │   └── db.js          # MongoDB connection
@@ -113,9 +136,17 @@ notes-devops/
 │   └── index.js           # App entry, routes
 ├── tests/
 │   └── ressources.test.js # API tests (Jest + Supertest)
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
+├── docker-compose.yml     # API + MongoDB services
+├── Dockerfile
+├── eslint.config.js       # ESLint config
 ├── package.json
 └── README.md
 ```
+
+## License
+
+ISC
 
