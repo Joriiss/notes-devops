@@ -8,3 +8,5 @@ README.md
 tests
 *.log
 debug*.log
+client/node_modules
+client/dist

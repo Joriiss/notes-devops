@@ -44,10 +44,29 @@ jobs:
       - name: Run tests
         run: npm test
 
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install and build client
+        run: |
+          cd client
+          npm ci
+          npm run build
+
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, frontend]
     steps:
       - uses: actions/checkout@v4
 
