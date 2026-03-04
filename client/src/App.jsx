@@ -177,6 +177,11 @@ export default function App() {
             <li key={note._id} className="card">
               <div className="card-body">
                 <h2 className="card-title">{note.title}</h2>
+                {note.createdAt && (
+                  <p className="card-meta">
+                    {new Date(note.createdAt).toLocaleDateString()}
+                  </p>
+                )}
                 <p className="card-content">{note.content}</p>
               </div>
               <div className="card-actions">
