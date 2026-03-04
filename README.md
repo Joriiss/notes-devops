@@ -18,7 +18,7 @@ REST API for managing notes. Built with Node.js, Express, and MongoDB for a DevO
 1. Clone the repository and install dependencies:
 
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/Joriiss/notes-devops.git
    cd notes-devops
    npm install
    ```
@@ -60,8 +60,6 @@ cd client
 npm install
 npm run dev
 ```
-
-Open http://localhost:5173. The Vite dev server proxies `/ressources` and `/health` to the API.
 
 **Production:** Build the client and start the API; the API serves the built files:
 
@@ -231,8 +229,3 @@ notes-devops/
 ├── package.json
 └── README.md
 ```
-
-## License
-
-ISC
-

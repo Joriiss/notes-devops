@@ -4,6 +4,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const { connectDB } = require('../src/config/db');
 const { app } = require('../src/index');
 const Note = require('../src/models/note');
+const Category = require('../src/models/category');
 
 let mongoServer;
 
@@ -56,6 +57,44 @@ describe('API /ressources — cas nominaux', () => {
     expect(res.body.items).toHaveLength(2);
   });
 
+  it('GET /ressources?q=term filters by title and content', async () => {
+    await request(app).post('/ressources').send({ title: 'Apple pie', content: 'Recipe' });
+    await request(app).post('/ressources').send({ title: 'Banana bread', content: 'Another recipe' });
+    await request(app).post('/ressources').send({ title: 'Salad', content: 'No match' });
+    const res = await request(app).get('/ressources?q=recipe');
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(2);
+    expect(res.body.items.map((n) => n.title).sort()).toEqual(['Apple pie', 'Banana bread']);
+  });
+
+  it('GET /ressources?sortBy=title&direction=asc returns title A–Z', async () => {
+    await request(app).post('/ressources').send({ title: 'Zebra', content: 'z' });
+    await request(app).post('/ressources').send({ title: 'Alpha', content: 'a' });
+    const res = await request(app).get('/ressources?sortBy=title&direction=asc');
+    expect(res.status).toBe(200);
+    expect(res.body.items).toHaveLength(2);
+    expect(res.body.items[0].title).toBe('Alpha');
+    expect(res.body.items[1].title).toBe('Zebra');
+  });
+
+  it('GET /ressources?sortBy=title&direction=desc returns title Z–A', async () => {
+    await request(app).post('/ressources').send({ title: 'Alpha', content: 'a' });
+    await request(app).post('/ressources').send({ title: 'Zebra', content: 'z' });
+    const res = await request(app).get('/ressources?sortBy=title&direction=desc');
+    expect(res.status).toBe(200);
+    expect(res.body.items[0].title).toBe('Zebra');
+    expect(res.body.items[1].title).toBe('Alpha');
+  });
+
+  it('GET /ressources?sortBy=createdAt&direction=asc returns oldest first', async () => {
+    const first = await request(app).post('/ressources').send({ title: 'First', content: '1' });
+    const second = await request(app).post('/ressources').send({ title: 'Second', content: '2' });
+    const res = await request(app).get('/ressources?sortBy=createdAt&direction=asc');
+    expect(res.status).toBe(200);
+    expect(res.body.items[0]._id).toBe(first.body._id);
+    expect(res.body.items[1]._id).toBe(second.body._id);
+  });
+
   it('GET /ressources/:id returns 200 and the note', async () => {
     const created = await request(app)
       .post('/ressources')
@@ -87,6 +126,26 @@ describe('API /ressources — cas nominaux', () => {
     expect(res.status).toBe(200);
     const getRes = await request(app).get(`/ressources/${id}`);
     expect(getRes.status).toBe(404);
+  });
+});
+
+describe('API /ressources — filter by category', () => {
+  beforeEach(async () => {
+    await Note.deleteMany({});
+    await Category.deleteMany({});
+  });
+
+  it('GET /ressources?categoryId=id returns only notes in that category', async () => {
+    const catRes = await request(app).post('/categories').send({ name: 'Work' });
+    const categoryId = catRes.body._id;
+    await request(app)
+      .post('/ressources')
+      .send({ title: 'In category', content: 'Yes', categoryIds: [categoryId] });
+    await request(app).post('/ressources').send({ title: 'No category', content: 'No' });
+    const res = await request(app).get(`/ressources?categoryId=${categoryId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.items[0].title).toBe('In category');
   });
 });
 
@@ -133,6 +192,68 @@ describe('API /ressources — cas d\'erreur', () => {
     const res = await request(app)
       .put(`/ressources/${fakeId}`)
       .send({ title: 'T', content: 'C' });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('API /categories', () => {
+  beforeEach(async () => {
+    await Note.deleteMany({});
+    await Category.deleteMany({});
+  });
+
+  it('GET /categories returns 200 and array', async () => {
+    const res = await request(app).get('/categories');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(0);
+  });
+
+  it('POST /categories creates and returns 201', async () => {
+    const res = await request(app).post('/categories').send({ name: 'Work' });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ name: 'Work' });
+    expect(res.body._id).toBeDefined();
+  });
+
+  it('GET /categories/:id returns 200 and the category', async () => {
+    const created = await request(app).post('/categories').send({ name: 'Personal' });
+    const res = await request(app).get(`/categories/${created.body._id}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ name: 'Personal' });
+  });
+
+  it('PUT /categories/:id updates and returns 200', async () => {
+    const created = await request(app).post('/categories').send({ name: 'Old' });
+    const res = await request(app)
+      .put(`/categories/${created.body._id}`)
+      .send({ name: 'New' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ name: 'New' });
+  });
+
+  it('DELETE /categories/:id deletes and returns 200', async () => {
+    const created = await request(app).post('/categories').send({ name: 'To delete' });
+    const res = await request(app).delete(`/categories/${created.body._id}`);
+    expect(res.status).toBe(200);
+    const getRes = await request(app).get(`/categories/${created.body._id}`);
+    expect(getRes.status).toBe(404);
+  });
+
+  it('POST /categories with missing name returns 400', async () => {
+    const res = await request(app).post('/categories').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/name/);
+  });
+
+  it('GET /categories/:id with invalid id returns 404', async () => {
+    const res = await request(app).get('/categories/invalid-id');
+    expect(res.status).toBe(404);
+  });
+
+  it('PUT /categories/:id with non-existent id returns 404', async () => {
+    const fakeId = '507f1f77bcf86cd799439012';
+    const res = await request(app).put(`/categories/${fakeId}`).send({ name: 'X' });
     expect(res.status).toBe(404);
   });
 });
