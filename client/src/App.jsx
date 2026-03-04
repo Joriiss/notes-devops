@@ -20,12 +20,27 @@ export default function App() {
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryError, setCategoryError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategoryId, setFilterCategoryId] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [direction, setDirection] = useState('desc');
+
+  function buildNotesUrl(pageNum) {
+    const params = new URLSearchParams();
+    params.set('page', String(pageNum));
+    params.set('limit', String(limit));
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
+    if (filterCategoryId) params.set('categoryId', filterCategoryId);
+    params.set('sortBy', sortBy);
+    params.set('direction', direction);
+    return `${API}?${params.toString()}`;
+  }
 
   async function fetchNotes(pageNum = page) {
     try {
       setError(null);
       setLoading(true);
-      const res = await fetch(`${API}?page=${pageNum}&limit=${limit}`);
+      const res = await fetch(buildNotesUrl(pageNum));
       if (!res.ok) throw new Error('Failed to load notes');
       const data = await res.json();
       setNotes(data.items ?? []);
@@ -55,7 +70,7 @@ export default function App() {
 
   useEffect(() => {
     fetchNotes(page);
-  }, [page]);
+  }, [page, searchQuery, filterCategoryId, sortBy, direction]);
 
   useEffect(() => {
     fetchCategories();
@@ -247,6 +262,52 @@ export default function App() {
             {categoryError}
           </p>
         )}
+      </section>
+
+      <section className="filter-bar" aria-label="Filter and sort notes">
+        <input
+          type="search"
+          placeholder="Search notes…"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPage(1);
+          }}
+          className="input filter-search"
+          aria-label="Search in title and content"
+        />
+        <select
+          value={filterCategoryId}
+          onChange={(e) => {
+            setFilterCategoryId(e.target.value);
+            setPage(1);
+          }}
+          className="input filter-select"
+          aria-label="Filter by category"
+        >
+          <option value="">All categories</option>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={`${sortBy}-${direction}`}
+          onChange={(e) => {
+            const [s, d] = e.target.value.split('-');
+            setSortBy(s);
+            setDirection(d);
+            setPage(1);
+          }}
+          className="input filter-select"
+          aria-label="Sort notes"
+        >
+          <option value="createdAt-desc">Newest first</option>
+          <option value="createdAt-asc">Oldest first</option>
+          <option value="title-asc">Title A–Z</option>
+          <option value="title-desc">Title Z–A</option>
+        </select>
       </section>
 
       {error && (
