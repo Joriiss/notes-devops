@@ -87,6 +87,26 @@
   margin-bottom: 0;
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 160px;
+  margin-bottom: 0;
+}
+
+.filter-select {
+  min-width: 140px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
 .form-actions {
   display: flex;
   gap: 0.5rem;

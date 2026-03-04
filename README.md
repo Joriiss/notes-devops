@@ -140,7 +140,7 @@ This creates base categories (`Work`, `Personal`, `Ideas`, `Archive`) and a set 
 
 **Validation:** Missing or empty `title`/`content` → `400` with error message. Invalid or non-existent note ID → `404`.
 
-**Pagination response shape:**
+**Pagination, filtering and sorting:**
 
 ```json
 {
@@ -151,6 +151,15 @@ This creates base categories (`Work`, `Personal`, `Ideas`, `Archive`) and a set 
   "totalPages": 5
 }
 ```
+
+Supported query params on `GET /ressources`:
+
+- `page` (default `1`) — page number
+- `limit` (default `10`, max `100`) — page size
+- `q` — full-text search in `title` and `content` (case-insensitive)
+- `categoryId` — only notes that belong to the given category
+- `sortBy` — `createdAt` (default) or `title`
+- `direction` — `desc` (default) or `asc`
 
 ### Categories
 

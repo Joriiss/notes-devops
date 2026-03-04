@@ -32,21 +32,40 @@ function validateNoteBody(body) {
   return { valid: true, title: titleStr, content: contentStr, categoryIds: ids };
 }
 
-// GET /ressources — list with pagination (?page=1&limit=10)
+// GET /ressources — list with pagination and optional filter/sort
 app.get('/ressources', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
     const skip = (page - 1) * limit;
 
+    const filter = {};
+
+    // Filter by category (?categoryId=<id>)
+    if (req.query.categoryId && isValidId(req.query.categoryId)) {
+      filter.categories = req.query.categoryId;
+    }
+
+    // Text search on title/content (?q=term)
+    if (typeof req.query.q === 'string' && req.query.q.trim()) {
+      const q = req.query.q.trim();
+      const regex = new RegExp(q, 'i');
+      filter.$or = [{ title: regex }, { content: regex }];
+    }
+
+    // Sorting (?sortBy=createdAt|title&direction=asc|desc)
+    const sortBy = req.query.sortBy === 'title' ? 'title' : 'createdAt';
+    const direction = req.query.direction === 'asc' ? 1 : -1;
+    const sort = { [sortBy]: direction };
+
     const [items, total] = await Promise.all([
-      Note.find()
-        .sort({ createdAt: -1 })
+      Note.find(filter)
+        .sort(sort)
         .skip(skip)
         .limit(limit)
         .populate('categories', 'name')
         .lean(),
-      Note.countDocuments(),
+      Note.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(total / limit) || 1;
