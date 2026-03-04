@@ -32,6 +32,24 @@ function buildFakeNote(index, categoryIds) {
   return { title, content, categories };
 }
 
+/** Run seed (assumes DB is already connected). Used by CLI and by server on startup. */
+async function seedData(count = DEFAULT_COUNT) {
+  console.log('Seeding categories...');
+  await Category.deleteMany({});
+  const categories = await Category.insertMany(
+    SEED_CATEGORIES.map((name) => ({ name }))
+  );
+  const categoryIds = categories.map((c) => c._id);
+
+  console.log(`Seeding ${count} notes...`);
+  await Note.deleteMany({});
+  const payload = Array.from({ length: count }, (_, i) =>
+    buildFakeNote(i, categoryIds)
+  );
+  await Note.insertMany(payload);
+  console.log('Seeding complete.');
+}
+
 async function run() {
   const rawCount = process.argv[2];
   const count =
@@ -42,21 +60,7 @@ async function run() {
   await connectDB();
 
   try {
-    console.log('Seeding categories...');
-    await Category.deleteMany({});
-    const categories = await Category.insertMany(
-      SEED_CATEGORIES.map((name) => ({ name }))
-    );
-    const categoryIds = categories.map((c) => c._id);
-
-    console.log(`Seeding ${count} notes...`);
-    await Note.deleteMany({});
-    const payload = Array.from({ length: count }, (_, i) =>
-      buildFakeNote(i, categoryIds)
-    );
-    await Note.insertMany(payload);
-
-    console.log('Seeding complete.');
+    await seedData(count);
   } catch (err) {
     console.error('Seeding failed:', err.message);
   } finally {
@@ -65,5 +69,10 @@ async function run() {
   }
 }
 
-run();
+// CLI: node src/seed.js [count]
+if (require.main === module) {
+  run();
+}
+
+module.exports = { seedData, DEFAULT_COUNT, SEED_CATEGORIES };
 
