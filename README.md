@@ -72,7 +72,7 @@ Then open http://localhost:3000 for the app and API.
 
 ## Run with Docker Compose
 
-With Docker and Docker Compose installed, you can run the full stack (API + MongoDB):
+With Docker and Docker Compose installed, you can run the full stack (API + MongoDB + Mongo Express admin UI):
 
 ```bash
 docker compose up --build
@@ -80,6 +80,7 @@ docker compose up --build
 
 - **API:** http://localhost:3000  
 - **MongoDB:** localhost:27017 (data persisted in volume `notes-devops_mongo_data`)
+- **Mongo Express** (admin UI): http://localhost:8081 — login: `admin` / `admin` (change via env in `docker-compose.yml` if needed)
 
 Run in detached mode: `docker compose up --build -d`. Stop with `docker compose down`.
 
@@ -223,7 +224,7 @@ notes-devops/
 ├── .dockerignore
 ├── .env.example
 ├── .gitignore
-├── docker-compose.yml     # API + MongoDB services
+├── docker-compose.yml     # API + MongoDB + Mongo Express
 ├── Dockerfile
 ├── eslint.config.js       # ESLint config
 ├── package.json
