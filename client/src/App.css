@@ -28,6 +28,65 @@
   min-height: 60px;
 }
 
+.form-group {
+  margin-bottom: 0.75rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.category-chip input {
+  margin: 0;
+}
+
+.category-create {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.category-create-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.category-create-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.category-create-input {
+  flex: 1;
+  min-width: 140px;
+  margin-bottom: 0;
+}
+
 .form-actions {
   display: flex;
   gap: 0.5rem;
@@ -133,6 +192,12 @@
   margin: 0 0 0.25rem;
   font-size: 0.8125rem;
   color: var(--text-muted);
+}
+
+.card-categories {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--accent);
 }
 
 .card-content {

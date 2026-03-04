@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 
 const API = '/ressources';
+const CATEGORIES_API = '/categories';
 
 export default function App() {
   const [notes, setNotes] = useState([]);
@@ -10,11 +11,15 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [validationWarning, setValidationWarning] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [categories, setCategories] = useState([]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState(null);
 
   async function fetchNotes(pageNum = page) {
     try {
@@ -37,15 +42,57 @@ export default function App() {
     }
   }
 
+  async function fetchCategories() {
+    try {
+      const res = await fetch(CATEGORIES_API);
+      if (!res.ok) throw new Error('Failed to load categories');
+      const data = await res.json();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setCategories([]);
+    }
+  }
+
   useEffect(() => {
     fetchNotes(page);
   }, [page]);
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   function clearForm() {
     setTitle('');
     setContent('');
+    setSelectedCategoryIds([]);
     setEditingId(null);
     setValidationWarning(null);
+  }
+
+  function toggleCategory(id) {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  }
+
+  async function handleCreateCategory(e) {
+    e.preventDefault();
+    const name = newCategoryName.trim();
+    if (!name) return;
+    setCategoryError(null);
+    try {
+      const res = await fetch(CATEGORIES_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create category');
+      setNewCategoryName('');
+      await fetchCategories();
+    } catch (err) {
+      setCategoryError(err.message);
+    }
   }
 
   async function handleSubmit(e) {
@@ -73,14 +120,14 @@ export default function App() {
         const res = await fetch(`${API}/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: t, content: c }),
+          body: JSON.stringify({ title: t, content: c, categoryIds: selectedCategoryIds }),
         });
         if (!res.ok) throw new Error('Failed to update');
       } else {
         const res = await fetch(API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: t, content: c }),
+          body: JSON.stringify({ title: t, content: c, categoryIds: selectedCategoryIds }),
         });
         if (!res.ok) throw new Error('Failed to create');
       }
@@ -109,6 +156,9 @@ export default function App() {
     setEditingId(note._id);
     setTitle(note.title);
     setContent(note.content);
+    setSelectedCategoryIds(
+      (note.categories || []).map((c) => (typeof c === 'object' ? c._id : c))
+    );
   }
 
   return (
@@ -143,6 +193,23 @@ export default function App() {
           rows={2}
           aria-label="Content"
         />
+        {categories.length > 0 && (
+          <div className="form-group">
+            <span className="form-label">Categories</span>
+            <div className="category-chips">
+              {categories.map((cat) => (
+                <label key={cat._id} className="category-chip">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategoryIds.includes(cat._id)}
+                    onChange={() => toggleCategory(cat._id)}
+                  />
+                  <span>{cat.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="form-actions">
           <button type="submit" className="btn btn-primary">
             {editingId ? 'Update' : 'Add'}
@@ -159,6 +226,28 @@ export default function App() {
           </p>
         )}
       </form>
+
+      <section className="category-create">
+        <h2 className="category-create-title">Create category</h2>
+        <form onSubmit={handleCreateCategory} className="category-create-form">
+          <input
+            type="text"
+            placeholder="Category name"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            className="input category-create-input"
+            aria-label="New category name"
+          />
+          <button type="submit" className="btn btn-primary">
+            Add category
+          </button>
+        </form>
+        {categoryError && (
+          <p className="error" role="alert">
+            {categoryError}
+          </p>
+        )}
+      </section>
 
       {error && (
         <p className="error" role="alert">
@@ -180,6 +269,14 @@ export default function App() {
                 {note.createdAt && (
                   <p className="card-meta">
                     {new Date(note.createdAt).toLocaleDateString()}
+                  </p>
+                )}
+                {(note.categories || []).length > 0 && (
+                  <p className="card-categories">
+                    {(note.categories || [])
+                      .map((c) => (typeof c === 'object' && c ? c.name : null))
+                      .filter(Boolean)
+                      .join(', ')}
                   </p>
                 )}
                 <p className="card-content">{note.content}</p>
