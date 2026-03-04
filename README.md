@@ -101,20 +101,66 @@ npm test
 
 Tests use an in-memory MongoDB (no local MongoDB required for tests).
 
+## Seed data
+
+You can quickly populate the database with fake notes and categories:
+
+```bash
+npm run seed          # default: 25 notes
+npm run seed -- 50    # custom count
+```
+
+This creates base categories (`Work`, `Personal`, `Ideas`, `Archive`) and a set of notes assigned to them.
+
 ## API routes
 
-| Method | Route              | Description              | Status      |
-|--------|--------------------|--------------------------|-------------|
-| GET    | `/health`          | Health check             | 200         |
-| GET    | `/ressources`      | List all notes           | 200         |
-| GET    | `/ressources/:id`  | Get one note by ID       | 200 or 404  |
-| POST   | `/ressources`      | Create a note            | 201 or 400  |
-| PUT    | `/ressources/:id`  | Update a note            | 200 or 404  |
-| DELETE | `/ressources/:id`  | Delete a note            | 200 or 404  |
+### Notes
 
-**Request body for create/update:** JSON with `title` and `content` (both required, non-empty).
+| Method | Route              | Description                                   | Status      |
+|--------|--------------------|-----------------------------------------------|-------------|
+| GET    | `/health`          | Health check                                  | 200         |
+| GET    | `/ressources`      | List notes (paginated, `?page=1&limit=10`)   | 200         |
+| GET    | `/ressources/:id`  | Get one note by ID                            | 200 or 404  |
+| POST   | `/ressources`      | Create a note                                 | 201 or 400  |
+| PUT    | `/ressources/:id`  | Update a note                                 | 200 or 404  |
+| DELETE | `/ressources/:id`  | Delete a note                                 | 200 or 404  |
 
-**Validation:** Missing or empty `title`/`content` → `400` with error message. Invalid or non-existent ID → `404`.
+**Request body for create/update:** JSON:
+
+```json
+{
+  "title": "My note",
+  "content": "Hello world",
+  "categoryIds": ["<categoryId>", "..."] // optional
+}
+```
+
+- `title`, `content` are required and non-empty.
+- `categoryIds` is optional and must contain valid category IDs if provided.
+
+**Validation:** Missing or empty `title`/`content` → `400` with error message. Invalid or non-existent note ID → `404`.
+
+**Pagination response shape:**
+
+```json
+{
+  "items": [ /* notes */ ],
+  "total": 42,
+  "page": 1,
+  "limit": 10,
+  "totalPages": 5
+}
+```
+
+### Categories
+
+| Method | Route               | Description                          | Status      |
+|--------|---------------------|--------------------------------------|-------------|
+| GET    | `/categories`       | List all categories                  | 200         |
+| GET    | `/categories/:id`   | Get a category by ID                 | 200 or 404  |
+| POST   | `/categories`       | Create a category (unique `name`)    | 201 or 400  |
+| PUT    | `/categories/:id`   | Rename a category                    | 200 or 404  |
+| DELETE | `/categories/:id`   | Delete category and unlink from notes| 200 or 404  |
 
 ## Example requests
 
@@ -161,8 +207,10 @@ notes-devops/
 │   ├── config/
 │   │   └── db.js          # MongoDB connection
 │   ├── models/
-│   │   └── note.js        # Note schema
-│   └── index.js           # App entry, routes
+│   │   ├── note.js        # Note schema
+│   │   └── category.js    # Category schema
+│   ├── index.js           # App entry, routes (notes + categories)
+│   └── seed.js            # Seed script for notes + categories
 ├── tests/
 │   └── ressources.test.js # API tests (Jest + Supertest)
 ├── .dockerignore
